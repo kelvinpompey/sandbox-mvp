@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
+	_ "embed"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -17,6 +18,9 @@ import (
 	"sync"
 	"time"
 )
+
+//go:embed web/index.html
+var indexHTML []byte
 
 // ---------- Types ----------
 
@@ -363,6 +367,20 @@ func guard(w http.ResponseWriter, r *http.Request) bool {
 }
 
 // ---------- Handlers ----------
+
+func handleHome(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path != "/" {
+		writeErr(w, 404, "not found")
+		return
+	}
+	if r.Method != http.MethodGet {
+		writeErr(w, 405, "method not allowed")
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(200)
+	_, _ = w.Write(indexHTML)
+}
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -715,6 +733,7 @@ func main() {
 	mux.HandleFunc("/v1/languages", handleLanguages)
 	mux.HandleFunc("/v1/executions", handlePostExec)
 	mux.HandleFunc("/v1/executions/", handleExecByID)
+	mux.HandleFunc("/", handleHome)
 
 	srv := &http.Server{
 		Addr:         ":" + port,

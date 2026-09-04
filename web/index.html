@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Code Sandbox MVP</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css" />
+<style>
+  :root { --bg:#0f172a; --panel:#1e293b; --border:#334155; --text:#e2e8f0; --muted:#94a3b8; --accent:#38bdf8; --green:#22c55e; --red:#ef4444; --amber:#f59e0b; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--text); line-height:1.5; }
+  a { color: var(--accent); }
+  header { padding: 28px 24px 18px; max-width:1100px; margin:0 auto; }
+  header h1 { margin:0 0 8px; font-size:28px; }
+  header p { margin:4px 0; color:var(--muted); }
+  .badges { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .badge { font-size:12px; background:#0b2536; border:1px solid #155e75; color:#a5f3fc; padding:3px 10px; border-radius:999px; }
+  main { max-width:1100px; margin:0 auto; padding:0 24px 48px; display:grid; gap:20px; }
+  section.card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px; }
+  section.card h2 { margin:0 0 10px; font-size:20px; }
+  section.card h3 { margin:18px 0 8px; font-size:15px; color:var(--accent); }
+  code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  pre { background:#0b1220; border:1px solid var(--border); border-radius:8px; padding:12px; overflow:auto; font-size:13px; }
+  table { width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); }
+  th { color:var(--muted); font-weight:600; }
+  ul.compact { margin:8px 0; padding-left:20px; font-size:14px; color:#cbd5e1; }
+  /* Playground */
+  .tabs { display:flex; gap:6px; flex-wrap:wrap; margin:12px 0; }
+  .tab { border:1px solid var(--border); background:#0b1220; color:var(--text); padding:7px 14px; border-radius:8px 8px 0 0; cursor:pointer; font-size:13px; }
+  .tab:hover { border-color:var(--accent); }
+  .tab.active { background:var(--accent); border-color:var(--accent); color:#082f49; font-weight:700; }
+  .editor-wrap { border:1px solid var(--border); border-radius:0 8px 8px 8px; overflow:hidden; }
+  .CodeMirror { height:320px; font-size:14px; }
+  .play-grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:14px; }
+  @media (max-width:800px){ .play-grid{ grid-template-columns:1fr; } }
+  label.lbl { display:block; font-size:12px; color:var(--muted); margin:10px 0 4px; text-transform:uppercase; letter-spacing:.04em; }
+  textarea.stdin, input.txt { width:100%; background:#0b1220; border:1px solid var(--border); color:var(--text); border-radius:8px; padding:10px; font-size:13px; font-family:ui-monospace,Menlo,Consolas,monospace; }
+  textarea.stdin { height:90px; resize:vertical; }
+  .limits { display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; }
+  @media (max-width:800px){ .limits{ grid-template-columns: repeat(2,1fr);} }
+  .controls { display:flex; gap:10px; align-items:center; margin-top:14px; flex-wrap:wrap; }
+  button.run { background:var(--green); border:none; color:#052e16; font-weight:700; padding:10px 22px; border-radius:8px; cursor:pointer; font-size:14px; }
+  button.run:disabled { opacity:.6; cursor:wait; }
+  button.cancel { background:transparent; border:1px solid var(--border); color:var(--text); padding:10px 16px; border-radius:8px; cursor:pointer; }
+  button.cancel:disabled { opacity:.4; cursor:default; }
+  .status { font-size:13px; font-weight:700; padding:5px 12px; border-radius:999px; border:1px solid var(--border); }
+  .status.queued,.status.running { background:#451a03; border-color:var(--amber); color:#fde68a; }
+  .status.succeeded { background:#052e16; border-color:var(--green); color:#bbf7d0; }
+  .status.failed,.status.oom,.status.timeout,.status.cancelled { background:#450a0a; border-color:var(--red); color:#fecaca; }
+  .out-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+  @media (max-width:800px){ .out-grid{ grid-template-columns:1fr; } }
+  .out-box h4 { margin:0 0 6px; font-size:13px; color:var(--muted); }
+  .out-box pre { min-height:120px; max-height:320px; margin:0; white-space:pre-wrap; word-break:break-word; }
+  .meta { font-size:12px; color:var(--muted); margin-top:10px; }
+  .entry { font-size:13px; color:var(--muted); margin-top:8px; }
+  .entry b { color:var(--text); }
+  footer { text-align:center; color:var(--muted); font-size:12px; padding:18px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>&#128187; Code Sandbox MVP</h1>
+  <p>Single-host, multi-language code execution sandbox. The Go API server accepts execution jobs over HTTP, runs each one in a locked-down Docker container, and exposes async poll-based results.</p>
+  <div class="badges">
+    <span class="badge">network: none</span>
+    <span class="badge">read-only rootfs</span>
+    <span class="badge">non-root uid 65532</span>
+    <span class="badge">no-new-privs</span>
+    <span class="badge">memory / cpu / pids limits</span>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <h2>What the API does</h2>
+    <p style="color:#cbd5e1;font-size:14px">Submit source files for one of 7 languages, poll until the job reaches a terminal state, then read <code>stdout</code> / <code>stderr</code>. One <code>docker run --rm</code> per execution; workspaces are deleted after the run. Job records persist as JSON under <code>DATA_DIR</code>.</p>
+
+    <h3>Supported languages</h3>
+    <table id="lang-table">
+      <thead><tr><th>ID</th><th>Entrypoint convention</th><th>Image</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Endpoints</h3>
+    <table>
+      <thead><tr><th>Method &amp; path</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET /healthz</code></td><td>Health check &rarr; <code>{"ok": true}</code>. Always open, no auth.</td></tr>
+        <tr><td><code>GET /v1/languages</code></td><td>List supported languages + runner images.</td></tr>
+        <tr><td><code>POST /v1/executions</code></td><td>Submit a job &rarr; <code>202 {id, status: queued}</code>. Body: <code>{language, files[], entrypoint, stdin?, limits?}</code></td></tr>
+        <tr><td><code>GET /v1/executions/:id</code></td><td>Poll job. <code>status: queued|running|succeeded|failed|timeout|oom|cancelled</code>, plus <code>exit_code</code>, <code>stdout</code>, <code>stderr</code>, <code>usage.wall_ms</code>.</td></tr>
+        <tr><td><code>DELETE /v1/executions/:id</code></td><td>Cancel a queued job immediately; interrupt a running one.</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Validation &amp; limits</h3>
+    <ul class="compact">
+      <li><code>files</code>: 1&ndash;20 files, &le;512KB total. Repo-relative paths only (no absolute, no <code>..</code>, no backslashes, max 5 levels).</li>
+      <li><code>entrypoint</code> must match one entry in <code>files[]</code>.</li>
+      <li><code>limits</code> (all optional): <code>timeout_ms</code> 1&ndash;120000 (default 10000), <code>memory_mb</code> 64&ndash;1024 (default 256), <code>output_kb</code> 1&ndash;1024 (default 256).</li>
+      <li>Compiled languages (Go/Java/Rust/Swift) are slow on a cold cache &mdash; use e.g. <code>{"timeout_ms":90000,"memory_mb":512}</code>. Kotlin needs <code>{"timeout_ms":120000,"memory_mb":1024}</code>.</li>
+      <li>Rate limits per IP: <code>POST /v1/executions</code> 10/min, reads 300/min &rarr; <code>429</code>.</li>
+      <li>Optional static key: send <code>X-API-Key</code> or <code>Authorization: Bearer</code> when the server sets <code>API_KEY</code>.</li>
+    </ul>
+
+    <h3>curl example</h3>
+    <pre>curl -s -X POST localhost:8080/v1/executions \
+  -H 'Content-Type: application/json' \
+  -d '{"language":"python",
+       "files":[{"path":"main.py","content":"print(42)"}],
+       "entrypoint":"main.py"}'</pre>
+  </section>
+
+  <section class="card">
+    <h2>Try it &mdash; playground</h2>
+    <p style="color:var(--muted);font-size:14px;margin:0">Pick a language tab, edit the code in the CodeMirror editor, optionally add stdin, then hit <b>Run</b>. Output is polled from the same API described above.</p>
+    <div class="tabs" id="tabs"></div>
+    <div class="entry">Editing <b id="entry-name">main.py</b> &nbsp;·&nbsp; <span id="lang-image"></span></div>
+    <div class="editor-wrap"><textarea id="code"></textarea></div>
+
+    <div class="play-grid">
+      <div>
+        <label class="lbl" for="stdin">stdin (optional)</label>
+        <textarea class="stdin" id="stdin" placeholder="input fed to the program on stdin..."></textarea>
+        <label class="lbl">Limits</label>
+        <div class="limits">
+          <div><label class="lbl" for="timeout">timeout_ms</label><input class="txt" id="timeout" type="number" value="10000" /></div>
+          <div><label class="lbl" for="memory">memory_mb</label><input class="txt" id="memory" type="number" value="256" /></div>
+          <div><label class="lbl" for="output">output_kb</label><input class="txt" id="output" type="number" value="256" /></div>
+          <div><label class="lbl" for="apikey">API key (if set)</label><input class="txt" id="apikey" type="text" placeholder="X-API-Key" /></div>
+        </div>
+      </div>
+      <div>
+        <label class="lbl">Run</label>
+        <div class="controls">
+          <button class="run" id="run-btn">&#9654; Run</button>
+          <button class="cancel" id="cancel-btn" disabled>Cancel</button>
+          <span class="status" id="status">idle</span>
+        </div>
+        <div class="meta" id="job-meta">No job yet.</div>
+      </div>
+    </div>
+
+    <div class="out-grid">
+      <div class="out-box"><h4>stdout</h4><pre id="out-stdout">(empty)</pre></div>
+      <div class="out-box"><h4>stderr</h4><pre id="out-stderr">(empty)</pre></div>
+    </div>
+  </section>
+</main>
+
+<footer>Code Sandbox MVP &middot; <a href="/healthz">/healthz</a> &middot; <a href="/v1/languages">/v1/languages</a></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/go/go.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/rust/rust.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/swift/swift.min.js"></script>
+<script>
+const LANGS = {
+  python:     { entry: "main.py",   mode: "python",     image: "sandbox-python:3.12",
+    sample: "print('hello python')\n" },
+  typescript: { entry: "main.ts",   mode: "text/typescript", image: "sandbox-typescript:node22",
+    sample: "console.log('hello typescript');\n" },
+  go:         { entry: "main.go",   mode: "text/x-go",  image: "sandbox-go:1.23",
+    sample: "package main\n\nimport \"fmt\"\n\nfunc main() {\n    fmt.Println(\"hello go\")\n}\n" },
+  java:       { entry: "Main.java", mode: "text/x-java", image: "sandbox-java:21",
+    sample: "public class Main {\n    public static void main(String[] args) {\n        System.out.println(\"hello java\");\n    }\n}\n" },
+  rust:       { entry: "main.rs",   mode: "text/x-rustsrc", image: "sandbox-rust:1.78",
+    sample: "fn main() {\n    println!(\"hello rust\");\n}\n" },
+  swift:      { entry: "main.swift", mode: "text/x-swift", image: "sandbox-swift:5.10",
+    sample: "print(\"hello swift\")\n" },
+  kotlin:     { entry: "Main.kt",   mode: "text/x-kotlin", image: "sandbox-kotlin:2.4",
+    sample: "fun main() {\n    println(\"hello kotlin\")\n}\n" },
+};
+const ORDER = ["python","typescript","go","java","rust","swift","kotlin"];
+const state = {};
+ORDER.forEach(k => { state[k] = { code: LANGS[k].sample, stdin: "" }; });
+let current = "python";
+let currentJob = null;
+let pollTimer = null;
+
+const tabsEl = document.getElementById("tabs");
+const entryEl = document.getElementById("entry-name");
+const imageEl = document.getElementById("lang-image");
+const stdinEl = document.getElementById("stdin");
+const statusEl = document.getElementById("status");
+const metaEl = document.getElementById("job-meta");
+const outEl = document.getElementById("out-stdout");
+const errEl = document.getElementById("out-stderr");
+const runBtn = document.getElementById("run-btn");
+const cancelBtn = document.getElementById("cancel-btn");
+
+const editor = CodeMirror.fromTextArea(document.getElementById("code"), {
+  lineNumbers: true,
+  theme: "material-darker",
+  mode: LANGS[current].mode,
+  indentUnit: 4,
+  tabSize: 4,
+});
+editor.setValue(state[current].code);
+
+// Build tabs + language table
+function buildTabs() {
+  tabsEl.innerHTML = "";
+  ORDER.forEach(id => {
+    const b = document.createElement("button");
+    b.className = "tab" + (id === current ? " active" : "");
+    b.textContent = id;
+    b.onclick = () => switchLang(id);
+    tabsEl.appendChild(b);
+  });
+  const tbody = document.querySelector("#lang-table tbody");
+  tbody.innerHTML = "";
+  ORDER.forEach(id => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = "<td><code></code></td><td><code></code></td><td><code></code></td>";
+    tr.children[0].firstChild.textContent = id;
+    tr.children[1].firstChild.textContent = LANGS[id].entry;
+    tr.children[2].firstChild.textContent = LANGS[id].image;
+    tbody.appendChild(tr);
+  });
+}
+
+function switchLang(id) {
+  state[current].code = editor.getValue();
+  state[current].stdin = stdinEl.value;
+  current = id;
+  editor.setOption("mode", LANGS[id].mode);
+  editor.setValue(state[id].code);
+  stdinEl.value = state[id].stdin;
+  entryEl.textContent = LANGS[id].entry;
+  imageEl.textContent = LANGS[id].image;
+  buildTabs();
+}
+
+// Refresh language images from the live API when available
+fetch("/v1/languages").then(r => r.ok ? r.json() : null).then(data => {
+  if (data && Array.isArray(data.languages)) {
+    data.languages.forEach(l => { if (LANGS[l.id]) LANGS[l.id].image = l.image; });
+    imageEl.textContent = LANGS[current].image;
+    buildTabs();
+  }
+}).catch(() => {});
+
+function setStatus(s) {
+  statusEl.textContent = s;
+  statusEl.className = "status " + s;
+}
+
+function headers() {
+  const h = { "Content-Type": "application/json" };
+  const k = document.getElementById("apikey").value.trim();
+  if (k) h["X-API-Key"] = k;
+  return h;
+}
+
+async function run() {
+  state[current].code = editor.getValue();
+  state[current].stdin = stdinEl.value;
+  const timeout_ms = parseInt(document.getElementById("timeout").value, 10) || 10000;
+  const memory_mb = parseInt(document.getElementById("memory").value, 10) || 256;
+  const output_kb = parseInt(document.getElementById("output").value, 10) || 256;
+  runBtn.disabled = true;
+  cancelBtn.disabled = false;
+  setStatus("queued");
+  outEl.textContent = "(running...)";
+  errEl.textContent = "(running...)";
+  metaEl.textContent = "Submitting job...";
+  try {
+    const res = await fetch("/v1/executions", {
+      method: "POST",
+      headers: headers(),
+      body: JSON.stringify({
+        language: current,
+        files: [{ path: LANGS[current].entry, content: editor.getValue() }],
+        entrypoint: LANGS[current].entry,
+        stdin: stdinEl.value,
+        limits: { timeout_ms, memory_mb, output_kb },
+      }),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok && res.status !== 202) {
+      setStatus("failed");
+      metaEl.textContent = "Submit failed: HTTP " + res.status + " " + (body.error || "");
+      outEl.textContent = "";
+      errEl.textContent = body.error || ("HTTP " + res.status);
+      runBtn.disabled = false;
+      cancelBtn.disabled = true;
+      return;
+    }
+    currentJob = body.id;
+    metaEl.textContent = "Job " + currentJob + " queued...";
+    poll();
+  } catch (e) {
+    setStatus("failed");
+    metaEl.textContent = "Submit error: " + e.message;
+    runBtn.disabled = false;
+    cancelBtn.disabled = true;
+  }
+}
+
+async function poll() {
+  clearTimeout(pollTimer);
+  if (!currentJob) return;
+  try {
+    const res = await fetch("/v1/executions/" + encodeURIComponent(currentJob), { headers: headers() });
+    const job = await res.json();
+    if (!res.ok) {
+      setStatus("failed");
+      metaEl.textContent = "Poll failed: HTTP " + res.status;
+      runBtn.disabled = false;
+      cancelBtn.disabled = true;
+      return;
+    }
+    setStatus(job.status);
+    outEl.textContent = job.stdout || (job.status === "queued" || job.status === "running" ? "(running...)" : "(empty)");
+    errEl.textContent = job.stderr || (job.status === "queued" || job.status === "running" ? "(running...)" : "(empty)");
+    const bits = ["job " + job.id, "status " + job.status];
+    if (job.exit_code !== null && job.exit_code !== undefined) bits.push("exit " + job.exit_code);
+    if (job.usage && job.usage.wall_ms !== undefined) bits.push(job.usage.wall_ms + "ms");
+    if (job.timed_out) bits.push("timed_out");
+    if (job.truncated) bits.push("truncated");
+    if (job.error) bits.push("error: " + job.error);
+    metaEl.textContent = bits.join(" · ");
+    if (job.status === "queued" || job.status === "running") {
+      pollTimer = setTimeout(poll, 1200);
+    } else {
+      runBtn.disabled = false;
+      cancelBtn.disabled = true;
+    }
+  } catch (e) {
+    metaEl.textContent = "Poll error: " + e.message + " — retrying...";
+    pollTimer = setTimeout(poll, 2000);
+  }
+}
+
+async function cancel() {
+  if (!currentJob) return;
+  cancelBtn.disabled = true;
+  try {
+    await fetch("/v1/executions/" + encodeURIComponent(currentJob), { method: "DELETE", headers: headers() });
+    poll();
+  } catch (e) {
+    metaEl.textContent = "Cancel error: " + e.message;
+  }
+}
+
+runBtn.onclick = run;
+cancelBtn.onclick = cancel;
+buildTabs();
+entryEl.textContent = LANGS[current].entry;
+imageEl.textContent = LANGS[current].image;
+setStatus("idle");
+</script>
+</body>
+</html>
