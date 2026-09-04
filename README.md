@@ -6,7 +6,7 @@ execution jobs over HTTP, runs each one in a locked-down Docker container
 limits), and exposes async poll-based results.
 
 Sandboxed languages: **Python 3.12, TypeScript (Node 22), Go 1.23,
-Java 21, Rust 1.78**. The API server itself needs only Go + Docker.
+Java 21, Rust 1.78, Swift 5.10, Kotlin 2.4**. The API server itself needs only Go + Docker.
 
 ## Prerequisites
 
@@ -27,7 +27,8 @@ cd sandbox-mvp
 ```
 
 This builds `sandbox-python:3.12`, `sandbox-typescript:node22`,
-`sandbox-go:1.23`, `sandbox-java:21`, `sandbox-rust:1.78`.
+`sandbox-go:1.23`, `sandbox-java:21`, `sandbox-rust:1.78`,
+`sandbox-swift:5.10`, `sandbox-kotlin:2.4`.
 
 ## 2. Build and run the API server
 
@@ -66,7 +67,7 @@ curl localhost:8080/v1/languages
 
 ```json
 {
-  "language": "python|typescript|go|java|rust",
+  "language": "python|typescript|go|java|rust|swift|kotlin",
   "files": [{"path": "main.py", "content": "print('hi')"}],
   "entrypoint": "main.py",
   "stdin": "",
@@ -80,9 +81,11 @@ Rules:
   (no absolute paths, no `..`, no backslashes, max 5 levels deep).
 - `entrypoint` must match one entry in `files[]`.
 - `limits` (all optional): `timeout_ms` 1–120000 (default 10000),
-  `memory_mb` 64–512 (default 256), `output_kb` 1–1024 (default 256).
-  Compiled languages (Go/Java/Rust) are slow on first build — request
+  `memory_mb` 64–1024 (default 256), `output_kb` 1–1024 (default 256).
+  Compiled languages (Go/Java/Rust/Swift) are slow on first build — request
   e.g. `{"timeout_ms": 90000, "memory_mb": 512}` for them.
+  Kotlin's compiler needs more headroom — request
+  e.g. `{"timeout_ms": 120000, "memory_mb": 1024}` for it.
 - `stdin` (optional, ≤512KB) is fed to the program on stdin.
 
 ### `GET /v1/executions/:id`
@@ -165,7 +168,7 @@ curl -s -X POST localhost:8080/v1/executions \
        "limits":{"timeout_ms":90000,"memory_mb":512}}'
 ```
 
-Java / Rust:
+Java / Rust / Kotlin:
 
 ```sh
 # Java: single public class matching the filename, default package
@@ -183,6 +186,14 @@ curl -s -X POST localhost:8080/v1/executions \
        "files":[{"path":"main.rs","content":"fn main(){ println!(\"hello rust\"); }"}],
        "entrypoint":"main.rs",
        "limits":{"timeout_ms":90000,"memory_mb":512}}'
+
+# Kotlin: top-level fun main(), all .kt files compiled together, no gradle deps
+curl -s -X POST localhost:8080/v1/executions \
+  -H 'Content-Type: application/json' \
+  -d '{"language":"kotlin",
+       "files":[{"path":"Main.kt","content":"fun main() { println(\"hello kotlin\") }"}],
+       "entrypoint":"Main.kt",
+       "limits":{"timeout_ms":120000,"memory_mb":1024}}'
 ```
 
 Timeout demo (→ `"status":"timeout"`):
@@ -211,7 +222,7 @@ End-to-end smoke (needs the server running + images built):
 ```
 
 Covers: health, languages, path-traversal rejects (400), hello-world in
-all 5 languages, stdin echo, multi-file, and timeout.
+all 7 languages, stdin echo, multi-file, and timeout.
 
 ## 6. Notes / limits (MVP)
 
@@ -220,5 +231,7 @@ all 5 languages, stdin echo, multi-file, and timeout.
 - Job records persist as JSON under `DATA_DIR` (`{id}.json`); non-terminal
   jobs found at startup are marked `cancelled`.
 - Single module programs only: one `package main` dir (Go), one public
-  class matching the filename (Java), single file no cargo deps (Rust).
+  class matching the filename (Java), single file no cargo deps (Rust),
+  top-level `fun main()` with all `.kt` files compiled together and no
+  gradle deps (Kotlin).
 - Single host, no auth beyond the static key, no streaming/SSE.

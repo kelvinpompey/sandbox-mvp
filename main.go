@@ -79,8 +79,9 @@ var (
 		"java":       "sandbox-java:21",
 		"rust":       "sandbox-rust:1.78",
 		"swift":      "sandbox-swift:5.10",
+		"kotlin":     "sandbox-kotlin:2.4",
 	}
-	langOrder = []string{"python", "typescript", "go", "java", "rust", "swift"}
+	langOrder = []string{"python", "typescript", "go", "java", "rust", "swift", "kotlin"}
 )
 
 // ---------- Helpers ----------
@@ -224,8 +225,8 @@ func validateExec(req *ExecRequest) (Limits, error) {
 	if lim.TimeoutMs <= 0 || lim.TimeoutMs > 120000 {
 		return Limits{}, fmt.Errorf("timeout_ms must be 1..120000")
 	}
-	if lim.MemoryMb < 64 || lim.MemoryMb > 512 {
-		return Limits{}, fmt.Errorf("memory_mb must be 64..512")
+	if lim.MemoryMb < 64 || lim.MemoryMb > 1024 {
+		return Limits{}, fmt.Errorf("memory_mb must be 64..1024")
 	}
 	if lim.OutputKb < 1 || lim.OutputKb > 1024 {
 		return Limits{}, fmt.Errorf("output_kb must be 1..1024")

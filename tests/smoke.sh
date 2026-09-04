@@ -8,6 +8,7 @@ curl -fsS "$BASE/healthz" | grep -q '"ok": *true'
 echo "== languages =="
 curl -fsS "$BASE/v1/languages" | grep -q python
 curl -fsS "$BASE/v1/languages" | grep -q swift
+curl -fsS "$BASE/v1/languages" | grep -q kotlin
 
 echo "== traversal rejects (400) =="
 for attempt in 1 2 3; do
@@ -95,6 +96,9 @@ HELLOS = {
     "swift": ({"language": "swift", "files": [{"path": "main.swift", "content": "print(\"hello swift\")\n"}], "entrypoint": "main.swift",
                "limits": {"timeout_ms": 90000, "memory_mb": 512}},
               "hello swift"),
+    "kotlin": ({"language": "kotlin", "files": [{"path": "Main.kt", "content": "fun main() { println(\"hello kotlin\") }\n"}], "entrypoint": "Main.kt",
+               "limits": {"timeout_ms": 120000, "memory_mb": 1024}},
+              "hello kotlin"),
 }
 for lang, (payload, needle) in HELLOS.items():
     check(f"hello-{lang}", payload, "succeeded", needle)
