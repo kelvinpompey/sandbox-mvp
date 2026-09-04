@@ -1,0 +1,26 @@
+{
+  "id": "e985fc85ff0fae5a",
+  "language": "java",
+  "files": [
+    {
+      "path": "Main.java",
+      "content": "public class Main { public static void main(String[] a){ System.out.println(\"hello java\"); } }\n"
+    }
+  ],
+  "entrypoint": "Main.java",
+  "limits": {
+    "timeout_ms": 90000,
+    "memory_mb": 512,
+    "output_kb": 256
+  },
+  "status": "succeeded",
+  "exit_code": 0,
+  "stdout": "hello java\n",
+  "stderr": "",
+  "timed_out": false,
+  "truncated": false,
+  "usage": {
+    "wall_ms": 8962
+  },
+  "created_at": "2026-09-04T14:43:11.327797804Z"
+}

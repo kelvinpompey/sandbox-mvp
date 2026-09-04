@@ -1,0 +1,30 @@
+{
+  "id": "f04bc2236a6e9300",
+  "language": "python",
+  "files": [
+    {
+      "path": "main.py",
+      "content": "from util import greet\nprint(greet())\n"
+    },
+    {
+      "path": "util.py",
+      "content": "def greet():\n    return 'hello from util'\n"
+    }
+  ],
+  "entrypoint": "main.py",
+  "limits": {
+    "timeout_ms": 10000,
+    "memory_mb": 256,
+    "output_kb": 256
+  },
+  "status": "succeeded",
+  "exit_code": 0,
+  "stdout": "hello from util\n",
+  "stderr": "",
+  "timed_out": false,
+  "truncated": false,
+  "usage": {
+    "wall_ms": 7785
+  },
+  "created_at": "2026-09-04T14:43:37.397076902Z"
+}

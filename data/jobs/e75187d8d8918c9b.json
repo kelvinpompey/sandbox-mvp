@@ -1,0 +1,27 @@
+{
+  "id": "e75187d8d8918c9b",
+  "language": "python",
+  "files": [
+    {
+      "path": "main.py",
+      "content": "import sys\nprint('echo:' + sys.stdin.read().strip())\n"
+    }
+  ],
+  "entrypoint": "main.py",
+  "stdin": "hi\n",
+  "limits": {
+    "timeout_ms": 10000,
+    "memory_mb": 256,
+    "output_kb": 256
+  },
+  "status": "succeeded",
+  "exit_code": 0,
+  "stdout": "echo:hi\n",
+  "stderr": "",
+  "timed_out": false,
+  "truncated": false,
+  "usage": {
+    "wall_ms": 7866
+  },
+  "created_at": "2026-09-04T14:43:29.379487256Z"
+}

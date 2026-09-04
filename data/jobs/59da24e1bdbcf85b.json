@@ -1,0 +1,26 @@
+{
+  "id": "59da24e1bdbcf85b",
+  "language": "rust",
+  "files": [
+    {
+      "path": "main.rs",
+      "content": "fn main(){ println!(\"hello rust\"); }\n"
+    }
+  ],
+  "entrypoint": "main.rs",
+  "limits": {
+    "timeout_ms": 90000,
+    "memory_mb": 512,
+    "output_kb": 256
+  },
+  "status": "succeeded",
+  "exit_code": 0,
+  "stdout": "hello rust\n",
+  "stderr": "",
+  "timed_out": false,
+  "truncated": false,
+  "usage": {
+    "wall_ms": 7336
+  },
+  "created_at": "2026-09-04T14:40:00.712171437Z"
+}

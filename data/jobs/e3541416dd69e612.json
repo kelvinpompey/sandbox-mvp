@@ -1,0 +1,26 @@
+{
+  "id": "e3541416dd69e612",
+  "language": "typescript",
+  "files": [
+    {
+      "path": "main.ts",
+      "content": "console.log('hello typescript');\n"
+    }
+  ],
+  "entrypoint": "main.ts",
+  "limits": {
+    "timeout_ms": 10000,
+    "memory_mb": 256,
+    "output_kb": 256
+  },
+  "status": "succeeded",
+  "exit_code": 0,
+  "stdout": "hello typescript\n",
+  "stderr": "",
+  "timed_out": false,
+  "truncated": false,
+  "usage": {
+    "wall_ms": 9799
+  },
+  "created_at": "2026-09-04T14:42:33.233239599Z"
+}

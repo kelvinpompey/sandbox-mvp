@@ -1,0 +1,26 @@
+{
+  "id": "d47223c56f51135c",
+  "language": "python",
+  "files": [
+    {
+      "path": "main.py",
+      "content": "import time\ntime.sleep(30)\nprint('done')\n"
+    }
+  ],
+  "entrypoint": "main.py",
+  "limits": {
+    "timeout_ms": 3000,
+    "memory_mb": 256,
+    "output_kb": 256
+  },
+  "status": "timeout",
+  "exit_code": -1,
+  "stdout": "",
+  "stderr": "",
+  "timed_out": true,
+  "truncated": false,
+  "usage": {
+    "wall_ms": 3001
+  },
+  "created_at": "2026-09-04T14:43:45.40739584Z"
+}

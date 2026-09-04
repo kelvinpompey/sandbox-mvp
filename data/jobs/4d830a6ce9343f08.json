@@ -1,0 +1,26 @@
+{
+  "id": "4d830a6ce9343f08",
+  "language": "go",
+  "files": [
+    {
+      "path": "main.go",
+      "content": "package main\nimport \"fmt\"\nfunc main(){ fmt.Println(\"hello go\") }\n"
+    }
+  ],
+  "entrypoint": "main.go",
+  "limits": {
+    "timeout_ms": 90000,
+    "memory_mb": 512,
+    "output_kb": 256
+  },
+  "status": "succeeded",
+  "exit_code": 0,
+  "stdout": "hello go\n",
+  "stderr": "",
+  "timed_out": false,
+  "truncated": false,
+  "usage": {
+    "wall_ms": 29180
+  },
+  "created_at": "2026-09-04T14:39:19.899564598Z"
+}
