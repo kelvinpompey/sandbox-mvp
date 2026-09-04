@@ -78,8 +78,9 @@ var (
 		"go":         "sandbox-go:1.23",
 		"java":       "sandbox-java:21",
 		"rust":       "sandbox-rust:1.78",
+		"swift":      "sandbox-swift:5.10",
 	}
-	langOrder = []string{"python", "typescript", "go", "java", "rust"}
+	langOrder = []string{"python", "typescript", "go", "java", "rust", "swift"}
 )
 
 // ---------- Helpers ----------

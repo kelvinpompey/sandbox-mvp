@@ -7,15 +7,24 @@ curl -fsS "$BASE/healthz" | grep -q '"ok": *true'
 
 echo "== languages =="
 curl -fsS "$BASE/v1/languages" | grep -q python
+curl -fsS "$BASE/v1/languages" | grep -q swift
 
 echo "== traversal rejects (400) =="
-code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/v1/executions" \
-  -H 'Content-Type: application/json' \
-  -d '{"language":"python","files":[{"path":"../escape","content":"x"}],"entrypoint":"../escape"}')
+for attempt in 1 2 3; do
+  code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/v1/executions" \
+    -H 'Content-Type: application/json' \
+    -d '{"language":"python","files":[{"path":"../escape","content":"x"}],"entrypoint":"../escape"}')
+  if [ "$code" = "429" ] && [ "$attempt" -lt 3 ]; then echo "rate limited on traversal check, waiting 61s..."; sleep 61; continue; fi
+  break
+done
 [ "$code" = "400" ] || { echo "expected 400 for ../escape, got $code"; exit 1; }
-code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/v1/executions" \
-  -H 'Content-Type: application/json' \
-  -d '{"language":"python","files":[{"path":"/abs","content":"x"}],"entrypoint":"/abs"}')
+for attempt in 1 2 3; do
+  code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$BASE/v1/executions" \
+    -H 'Content-Type: application/json' \
+    -d '{"language":"python","files":[{"path":"/abs","content":"x"}],"entrypoint":"/abs"}')
+  if [ "$code" = "429" ] && [ "$attempt" -lt 3 ]; then echo "rate limited on traversal check, waiting 61s..."; sleep 61; continue; fi
+  break
+done
 [ "$code" = "400" ] || { echo "expected 400 for /abs, got $code"; exit 1; }
 
 # Full matrix (hello + stdin + multi-file + timeout) runs in stdlib python
@@ -41,9 +50,15 @@ def api(method, path, body=None):
 import urllib.error
 
 def submit(payload):
-    code, resp = api("POST", "/v1/executions", payload)
-    assert code == 202, f"POST -> {code} {resp}"
-    return resp["id"]
+    for attempt in range(3):
+        code, resp = api("POST", "/v1/executions", payload)
+        if code == 429 and attempt < 2:
+            print(f"rate limited, waiting 61s (attempt {attempt+1})...", file=sys.stderr)
+            time.sleep(61)
+            continue
+        assert code == 202, f"POST -> {code} {resp}"
+        return resp["id"]
+    assert False, f"POST failed after retries -> {code} {resp}"
 
 def wait_done(jid, timeout_s=75):
     deadline = time.time() + timeout_s
@@ -75,8 +90,11 @@ HELLOS = {
               "limits": {"timeout_ms": 90000, "memory_mb": 512}},
              "hello java"),
     "rust": ({"language": "rust", "files": [{"path": "main.rs", "content": "fn main(){ println!(\"hello rust\"); }\n"}], "entrypoint": "main.rs",
-              "limits": {"timeout_ms": 90000, "memory_mb": 512}},
-             "hello rust"),
+               "limits": {"timeout_ms": 90000, "memory_mb": 512}},
+              "hello rust"),
+    "swift": ({"language": "swift", "files": [{"path": "main.swift", "content": "print(\"hello swift\")\n"}], "entrypoint": "main.swift",
+               "limits": {"timeout_ms": 90000, "memory_mb": 512}},
+              "hello swift"),
 }
 for lang, (payload, needle) in HELLOS.items():
     check(f"hello-{lang}", payload, "succeeded", needle)
