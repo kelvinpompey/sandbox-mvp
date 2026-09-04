@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -598,6 +599,13 @@ func runJob(id string) {
 
 	image := images[j.Language]
 	mem := fmt.Sprintf("%dm", limits.MemoryMb)
+	// Go carries a pre-warmed build-cache copy (~50MB) plus the build dir
+	// on /tmp; give it headroom so partial cache misses can't hit ENOSPC
+	// on the 128m default. tmpfs is capped, not reserved.
+	tmpfsSize := "128m"
+	if j.Language == "go" {
+		tmpfsSize = "256m"
+	}
 	args := []string{
 		"run", "--rm", "-i",
 		"--network", "none",
@@ -608,7 +616,7 @@ func runJob(id string) {
 		"--cpus", "1.0",
 		"--pids-limit", "128",
 		"--read-only",
-		"--tmpfs", "/tmp:rw,size=128m,exec",
+		"--tmpfs", "/tmp:rw,size=" + tmpfsSize + ",exec",
 		"-v", workdir + ":/box:ro",
 		image, "/runner/run.sh", "/box", j.Entrypoint,
 	}
@@ -710,7 +718,16 @@ func main() {
 		dataDir = d
 	}
 	apiKey = os.Getenv("API_KEY")
-	workers := 4
+	// Default to host CPU count (capped): 2 workers on a 2-core VPS so two
+	// jobs each get a full --cpus 1.0 share with no oversubscription.
+	// Override with WORKERS= if the host is shared with other services.
+	workers := runtime.NumCPU()
+	if workers < 1 {
+		workers = 1
+	}
+	if workers > 4 {
+		workers = 4
+	}
 	if v := os.Getenv("WORKERS"); v != "" {
 		var n int
 		if _, err := fmt.Sscanf(v, "%d", &n); err == nil && n >= 1 && n <= 32 {

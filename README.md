@@ -44,7 +44,7 @@ Environment variables:
 |-----------|--------------|--------------------------------------------|
 | `PORT`    | `8080`       | HTTP listen port                           |
 | `DATA_DIR`| `./data/jobs`| Job JSON persistence dir (created if missing) |
-| `WORKERS` | `4`          | Concurrent `docker run` workers (1–32)     |
+| `WORKERS` | CPUs, max 4  | Concurrent `docker run` workers (1–32); e.g. 2 on a 2-core VPS |
 | `API_KEY` | _(empty)_    | If set, clients must send `X-API-Key: <key>` (or `Authorization: Bearer <key>`); `/healthz` stays open |
 
 Health check:
@@ -82,8 +82,9 @@ Rules:
 - `entrypoint` must match one entry in `files[]`.
 - `limits` (all optional): `timeout_ms` 1–120000 (default 10000),
   `memory_mb` 64–1024 (default 256), `output_kb` 1–1024 (default 256).
-  Compiled languages (Go/Java/Rust/Swift) are slow on first build — request
+  Compiled languages (Java/Rust/Swift) are slow on first build — request
   e.g. `{"timeout_ms": 90000, "memory_mb": 512}` for them.
+  (Go is fast on defaults: its image ships a pre-warmed build cache.)
   Kotlin's compiler needs more headroom — request
   e.g. `{"timeout_ms": 120000, "memory_mb": 1024}` for it.
 - `stdin` (optional, ≤512KB) is fed to the program on stdin.
@@ -157,15 +158,14 @@ curl -s -X POST localhost:8080/v1/executions \
        "entrypoint":"main.ts"}'
 ```
 
-Go (needs the bigger limits on a cold cache):
+Go (fast on defaults — pre-warmed build cache in the image):
 
 ```sh
 curl -s -X POST localhost:8080/v1/executions \
   -H 'Content-Type: application/json' \
   -d '{"language":"go",
        "files":[{"path":"main.go","content":"package main\nimport \"fmt\"\nfunc main(){ fmt.Println(\"hello go\") }"}],
-       "entrypoint":"main.go",
-       "limits":{"timeout_ms":90000,"memory_mb":512}}'
+       "entrypoint":"main.go"}'
 ```
 
 Java / Rust / Kotlin:
