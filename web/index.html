@@ -9,54 +9,117 @@
 <style>
   :root { --bg:#0f172a; --panel:#1e293b; --border:#334155; --text:#e2e8f0; --muted:#94a3b8; --accent:#38bdf8; --green:#22c55e; --red:#ef4444; --amber:#f59e0b; }
   * { box-sizing: border-box; }
-  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--text); line-height:1.5; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:var(--bg); color:var(--text); line-height:1.5; overflow-x:clip; }
   a { color: var(--accent); }
-  header { padding: 28px 24px 18px; max-width:1100px; margin:0 auto; }
-  header h1 { margin:0 0 8px; font-size:28px; }
-  header p { margin:4px 0; color:var(--muted); }
+  header { padding: 22px clamp(12px, 4vw, 24px) 14px; max-width:1100px; margin:0 auto; }
+  header h1 { margin:0 0 8px; font-size: clamp(22px, 5.5vw, 28px); line-height:1.2; overflow-wrap:anywhere; }
+  header p { margin:4px 0; color:var(--muted); font-size: clamp(13px, 3.8vw, 15px); }
   .badges { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
-  .badge { font-size:12px; background:#0b2536; border:1px solid #155e75; color:#a5f3fc; padding:3px 10px; border-radius:999px; }
-  main { max-width:1100px; margin:0 auto; padding:0 24px 48px; display:grid; gap:20px; }
-  section.card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding:20px; }
-  section.card h2 { margin:0 0 10px; font-size:20px; }
+  .badge { font-size:12px; background:#0b2536; border:1px solid #155e75; color:#a5f3fc; padding:4px 10px; border-radius:999px; white-space:nowrap; }
+  main { max-width:1100px; margin:0 auto; padding:0 clamp(12px, 4vw, 24px) 48px; display:grid; gap:16px; width:100%; }
+  section.card { background:var(--panel); border:1px solid var(--border); border-radius:12px; padding: clamp(14px, 4vw, 20px); min-width:0; overflow:hidden; }
+  section.card h2 { margin:0 0 10px; font-size: clamp(17px, 4.5vw, 20px); }
   section.card h3 { margin:18px 0 8px; font-size:15px; color:var(--accent); }
+  section.card p { overflow-wrap:break-word; }
   code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  pre { background:#0b1220; border:1px solid var(--border); border-radius:8px; padding:12px; overflow:auto; font-size:13px; }
+  code { overflow-wrap:anywhere; }
+  pre { background:#0b1220; border:1px solid var(--border); border-radius:8px; padding:12px; overflow:auto; font-size:13px; max-width:100%; -webkit-overflow-scrolling:touch; }
+  .table-scroll { overflow-x:auto; -webkit-overflow-scrolling:touch; margin:8px -4px 0; padding:0 4px 4px; border-radius:8px; }
+  .table-scroll table { min-width:560px; }
   table { width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
-  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); }
-  th { color:var(--muted); font-weight:600; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--border); vertical-align:top; }
+  th { color:var(--muted); font-weight:600; white-space:nowrap; }
+  td code { word-break:break-word; }
   ul.compact { margin:8px 0; padding-left:20px; font-size:14px; color:#cbd5e1; }
+  ul.compact li { margin-bottom:4px; overflow-wrap:break-word; }
   /* Playground */
   .tabs { display:flex; gap:6px; flex-wrap:wrap; margin:12px 0; }
-  .tab { border:1px solid var(--border); background:#0b1220; color:var(--text); padding:7px 14px; border-radius:8px 8px 0 0; cursor:pointer; font-size:13px; }
+  .tab { border:1px solid var(--border); background:#0b1220; color:var(--text); padding:7px 14px; border-radius:8px 8px 0 0; cursor:pointer; font-size:13px; min-height:36px; touch-action:manipulation; }
   .tab:hover { border-color:var(--accent); }
   .tab.active { background:var(--accent); border-color:var(--accent); color:#082f49; font-weight:700; }
-  .editor-wrap { border:1px solid var(--border); border-radius:0 8px 8px 8px; overflow:hidden; }
+  .editor-wrap { border:1px solid var(--border); border-radius:0 8px 8px 8px; overflow:hidden; max-width:100%; position:relative; }
+  .editor-wrap .CodeMirror-scroll { max-width:100%; }
+  .editor-top { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:10px 0 8px; }
+  .editor-top .entry { margin-top:0; flex:1 1 auto; min-width:0; }
+  .editor-top button.run { flex:0 0 auto; }
   .CodeMirror { height:320px; font-size:14px; }
   .play-grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-top:14px; }
   @media (max-width:800px){ .play-grid{ grid-template-columns:1fr; } }
   label.lbl { display:block; font-size:12px; color:var(--muted); margin:10px 0 4px; text-transform:uppercase; letter-spacing:.04em; }
-  textarea.stdin, input.txt { width:100%; background:#0b1220; border:1px solid var(--border); color:var(--text); border-radius:8px; padding:10px; font-size:13px; font-family:ui-monospace,Menlo,Consolas,monospace; }
+  textarea.stdin, input.txt { width:100%; background:#0b1220; border:1px solid var(--border); color:var(--text); border-radius:8px; padding:10px; font-size:13px; font-family:ui-monospace,Menlo,Consolas,monospace; max-width:100%; }
   textarea.stdin { height:90px; resize:vertical; }
   .limits { display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; }
   @media (max-width:800px){ .limits{ grid-template-columns: repeat(2,1fr);} }
   .controls { display:flex; gap:10px; align-items:center; margin-top:14px; flex-wrap:wrap; }
-  button.run { background:var(--green); border:none; color:#052e16; font-weight:700; padding:10px 22px; border-radius:8px; cursor:pointer; font-size:14px; }
+  button.run { background:var(--green); border:none; color:#052e16; font-weight:700; padding:10px 22px; border-radius:8px; cursor:pointer; font-size:14px; min-height:44px; touch-action:manipulation; }
   button.run:disabled { opacity:.6; cursor:wait; }
-  button.cancel { background:transparent; border:1px solid var(--border); color:var(--text); padding:10px 16px; border-radius:8px; cursor:pointer; }
+  button.cancel { background:transparent; border:1px solid var(--border); color:var(--text); padding:10px 16px; border-radius:8px; cursor:pointer; min-height:44px; touch-action:manipulation; }
   button.cancel:disabled { opacity:.4; cursor:default; }
-  .status { font-size:13px; font-weight:700; padding:5px 12px; border-radius:999px; border:1px solid var(--border); }
+  .status { font-size:13px; font-weight:700; padding:5px 12px; border-radius:999px; border:1px solid var(--border); white-space:nowrap; }
   .status.queued,.status.running { background:#451a03; border-color:var(--amber); color:#fde68a; }
   .status.succeeded { background:#052e16; border-color:var(--green); color:#bbf7d0; }
   .status.failed,.status.oom,.status.timeout,.status.cancelled { background:#450a0a; border-color:var(--red); color:#fecaca; }
   .out-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
   @media (max-width:800px){ .out-grid{ grid-template-columns:1fr; } }
+  .out-box { min-width:0; }
   .out-box h4 { margin:0 0 6px; font-size:13px; color:var(--muted); }
   .out-box pre { min-height:120px; max-height:320px; margin:0; white-space:pre-wrap; word-break:break-word; }
-  .meta { font-size:12px; color:var(--muted); margin-top:10px; }
-  .entry { font-size:13px; color:var(--muted); margin-top:8px; }
+  .meta { font-size:12px; color:var(--muted); margin-top:10px; overflow-wrap:anywhere; }
+  .entry { font-size:13px; color:var(--muted); margin-top:8px; overflow-wrap:anywhere; }
   .entry b { color:var(--text); }
-  footer { text-align:center; color:var(--muted); font-size:12px; padding:18px; }
+  footer { text-align:center; color:var(--muted); font-size:12px; padding:18px clamp(12px,4vw,24px); }
+  /* ---- Result bottom sheet (mobile only) ---- */
+  .sheet-backdrop, .sheet-handle-zone, #view-result-btn { display:none; }
+  .sheet { min-width:0; }
+  @media (max-width:800px){
+    .sheet-backdrop { display:block; position:fixed; inset:0; background:rgba(2,6,23,.6); opacity:0; pointer-events:none; transition:opacity .25s ease; z-index:40; }
+    body.sheet-open .sheet-backdrop { opacity:1; pointer-events:auto; }
+    .sheet { display:flex; flex-direction:column; position:fixed; left:0; right:0; bottom:0; z-index:50;
+      background:var(--panel); border:1px solid var(--border); border-bottom:none; border-radius:16px 16px 0 0;
+      height:65vh; height:65dvh; max-height:92vh; max-height:92dvh; transform:translateY(105%); transition:transform .28s ease;
+      box-shadow:0 -12px 40px rgba(0,0,0,.5); overflow:hidden; }
+    body.sheet-open .sheet { transform:translateY(0); }
+    body.sheet-expanded .sheet { height:90vh; height:90dvh; }
+    .sheet-handle-zone { display:block; touch-action:none; cursor:grab; padding:8px 16px 10px; border-bottom:1px solid var(--border); flex:0 0 auto; }
+    .sheet-handle-zone:active { cursor:grabbing; }
+    .sheet-grabber { width:40px; height:4px; border-radius:999px; background:var(--border); margin:0 auto 10px; }
+    .sheet-header { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .sheet-title { display:flex; align-items:center; gap:8px; font-size:15px; font-weight:700; min-width:0; }
+    .sheet-title .status { font-size:12px; }
+    .sheet-actions { display:flex; gap:8px; flex:0 0 auto; }
+    .sheet-btn { background:#0b1220; border:1px solid var(--border); color:var(--text); border-radius:8px; padding:8px 12px; font-size:13px; cursor:pointer; min-height:36px; touch-action:manipulation; }
+    .sheet-btn:active { border-color:var(--accent); }
+    .sheet-meta { font-size:12px; color:var(--muted); margin-top:8px; overflow-wrap:anywhere; }
+    .sheet-body { overflow-y:auto; -webkit-overflow-scrolling:touch; padding:12px 16px 20px; overscroll-behavior:contain; }
+    .sheet-body .out-grid { margin-top:0; }
+    #view-result-btn { position:fixed; left:50%; transform:translateX(-50%); bottom:calc(16px + env(safe-area-inset-bottom)); z-index:30;
+      display:none; align-items:center; gap:8px; background:var(--accent); color:#082f49; font-weight:700; font-size:14px;
+      border:none; border-radius:999px; padding:12px 20px; min-height:48px; cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.45); white-space:nowrap; }
+    #view-result-btn.show { display:inline-flex; }
+    body.sheet-open #view-result-btn { display:none; }
+    body.sheet-open { overflow:hidden; }
+  }
+  /* ---- Mobile refinements ---- */
+  @media (max-width:600px){
+    main { gap:12px; padding-bottom:32px; }
+    .tabs { flex-wrap:nowrap; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:thin; padding-bottom:6px; margin:10px -4px; padding-left:4px; padding-right:4px; }
+    .tabs .tab { flex:0 0 auto; padding:10px 16px; font-size:14px; border-radius:8px; }
+    .CodeMirror { height:260px; font-size:13px; }
+    textarea.stdin, input.txt { font-size:16px; padding:12px 10px; }
+    input.txt { min-height:44px; }
+    .controls { align-items:stretch; }
+    .editor-top button.run { font-size:15px; padding:10px 20px; min-height:44px; }
+    .controls button.cancel { flex:1 1 auto; min-height:48px; font-size:15px; }
+    .controls .status { align-self:center; }
+    pre { font-size:12px; }
+    ul.compact { font-size:13px; }
+    .out-box pre { min-height:100px; max-height:260px; }
+  }
+  @media (max-width:380px){
+    .limits { gap:8px; }
+    .badge { font-size:11px; }
+  }
 </style>
 </head>
 <body>
@@ -78,12 +141,15 @@
     <p style="color:#cbd5e1;font-size:14px">Submit source files for one of 7 languages, poll until the job reaches a terminal state, then read <code>stdout</code> / <code>stderr</code>. One <code>docker run --rm</code> per execution; workspaces are deleted after the run. Job records persist as JSON under <code>DATA_DIR</code>.</p>
 
     <h3>Supported languages</h3>
+    <div class="table-scroll">
     <table id="lang-table">
       <thead><tr><th>ID</th><th>Entrypoint convention</th><th>Image</th></tr></thead>
       <tbody></tbody>
     </table>
+    </div>
 
     <h3>Endpoints</h3>
+    <div class="table-scroll">
     <table>
       <thead><tr><th>Method &amp; path</th><th>Description</th></tr></thead>
       <tbody>
@@ -94,6 +160,7 @@
         <tr><td><code>DELETE /v1/executions/:id</code></td><td>Cancel a queued job immediately; interrupt a running one.</td></tr>
       </tbody>
     </table>
+    </div>
 
     <h3>Validation &amp; limits</h3>
     <ul class="compact">
@@ -117,7 +184,10 @@
     <h2>Try it &mdash; playground</h2>
     <p style="color:var(--muted);font-size:14px;margin:0">Pick a language tab, edit the code in the CodeMirror editor, optionally add stdin, then hit <b>Run</b>. Output is polled from the same API described above.</p>
     <div class="tabs" id="tabs"></div>
-    <div class="entry">Editing <b id="entry-name">main.py</b> &nbsp;·&nbsp; <span id="lang-image"></span></div>
+    <div class="editor-top">
+      <div class="entry">Editing <b id="entry-name">main.py</b> &nbsp;·&nbsp; <span id="lang-image"></span></div>
+      <button class="run" id="run-btn">&#9654; Run</button>
+    </div>
     <div class="editor-wrap"><textarea id="code"></textarea></div>
 
     <div class="play-grid">
@@ -135,7 +205,6 @@
       <div>
         <label class="lbl">Run</label>
         <div class="controls">
-          <button class="run" id="run-btn">&#9654; Run</button>
           <button class="cancel" id="cancel-btn" disabled>Cancel</button>
           <span class="status" id="status">idle</span>
         </div>
@@ -143,10 +212,28 @@
       </div>
     </div>
 
-    <div class="out-grid">
-      <div class="out-box"><h4>stdout</h4><pre id="out-stdout">(empty)</pre></div>
-      <div class="out-box"><h4>stderr</h4><pre id="out-stderr">(empty)</pre></div>
+    <div class="sheet-backdrop" id="sheet-backdrop"></div>
+    <div class="sheet" id="result-sheet" role="dialog" aria-modal="false" aria-label="Execution output">
+      <div class="sheet-handle-zone" id="sheet-handle-zone">
+        <div class="sheet-grabber"></div>
+        <div class="sheet-header">
+          <div class="sheet-title">Result <span class="status" id="sheet-status">idle</span></div>
+          <div class="sheet-actions">
+            <button class="sheet-btn" id="sheet-expand-btn">Expand</button>
+            <button class="sheet-btn" id="sheet-cancel-btn" disabled>Cancel</button>
+            <button class="sheet-btn" id="sheet-close-btn" aria-label="Close output">✕</button>
+          </div>
+        </div>
+        <div class="sheet-meta" id="sheet-meta">No job yet.</div>
+      </div>
+      <div class="sheet-body">
+        <div class="out-grid">
+          <div class="out-box"><h4>stdout</h4><pre id="out-stdout">(empty)</pre></div>
+          <div class="out-box"><h4>stderr</h4><pre id="out-stderr">(empty)</pre></div>
+        </div>
+      </div>
     </div>
+    <button id="view-result-btn">↑ View result</button>
   </section>
 </main>
 
@@ -193,6 +280,48 @@ const outEl = document.getElementById("out-stdout");
 const errEl = document.getElementById("out-stderr");
 const runBtn = document.getElementById("run-btn");
 const cancelBtn = document.getElementById("cancel-btn");
+// Bottom-sheet refs (mobile only; elements are hidden on desktop via CSS)
+const sheetEl = document.getElementById("result-sheet");
+const sheetBackdrop = document.getElementById("sheet-backdrop");
+const sheetHandleZone = document.getElementById("sheet-handle-zone");
+const sheetStatusEl = document.getElementById("sheet-status");
+const sheetMetaEl = document.getElementById("sheet-meta");
+const sheetCloseBtn = document.getElementById("sheet-close-btn");
+const sheetExpandBtn = document.getElementById("sheet-expand-btn");
+const sheetCancelBtn = document.getElementById("sheet-cancel-btn");
+const viewResultBtn = document.getElementById("view-result-btn");
+const sheetMedia = window.matchMedia("(max-width: 800px)");
+let hasResult = false;
+let sheetShownForJob = null;
+
+function isMobile() { return sheetMedia.matches; }
+
+function setMeta(t) {
+  metaEl.textContent = t;
+  if (sheetMetaEl) sheetMetaEl.textContent = t;
+}
+
+function openSheet() {
+  if (!isMobile()) return;
+  document.body.classList.add("sheet-open");
+  if (sheetEl) sheetEl.setAttribute("aria-modal", "true");
+  if (viewResultBtn) viewResultBtn.classList.remove("show");
+}
+
+function closeSheet() {
+  document.body.classList.remove("sheet-open", "sheet-expanded");
+  if (sheetEl) {
+    sheetEl.setAttribute("aria-modal", "false");
+    sheetEl.style.transform = "";
+  }
+  if (sheetExpandBtn) sheetExpandBtn.textContent = "Expand";
+  // Offer a way back in if we already have output.
+  if (hasResult && isMobile()) viewResultBtn.classList.add("show");
+}
+
+function setRunDisabled(d) {
+  runBtn.disabled = d;
+}
 
 const editor = CodeMirror.fromTextArea(document.getElementById("code"), {
   lineNumbers: true,
@@ -249,6 +378,14 @@ fetch("/v1/languages").then(r => r.ok ? r.json() : null).then(data => {
 function setStatus(s) {
   statusEl.textContent = s;
   statusEl.className = "status " + s;
+  if (sheetStatusEl) {
+    sheetStatusEl.textContent = s;
+    sheetStatusEl.className = "status " + s;
+  }
+}
+
+function syncCancelDisabled() {
+  if (sheetCancelBtn) sheetCancelBtn.disabled = cancelBtn.disabled;
 }
 
 function headers() {
@@ -264,12 +401,13 @@ async function run() {
   const timeout_ms = parseInt(document.getElementById("timeout").value, 10) || 10000;
   const memory_mb = parseInt(document.getElementById("memory").value, 10) || 256;
   const output_kb = parseInt(document.getElementById("output").value, 10) || 256;
-  runBtn.disabled = true;
+  setRunDisabled(true);
   cancelBtn.disabled = false;
+  syncCancelDisabled();
   setStatus("queued");
   outEl.textContent = "(running...)";
   errEl.textContent = "(running...)";
-  metaEl.textContent = "Submitting job...";
+  setMeta("Submitting job...");
   try {
     const res = await fetch("/v1/executions", {
       method: "POST",
@@ -285,21 +423,33 @@ async function run() {
     const body = await res.json().catch(() => ({}));
     if (!res.ok && res.status !== 202) {
       setStatus("failed");
-      metaEl.textContent = "Submit failed: HTTP " + res.status + " " + (body.error || "");
+      setMeta("Submit failed: HTTP " + res.status + " " + (body.error || ""));
       outEl.textContent = "";
       errEl.textContent = body.error || ("HTTP " + res.status);
-      runBtn.disabled = false;
+      setRunDisabled(false);
       cancelBtn.disabled = true;
+      syncCancelDisabled();
+      hasResult = true;
+      openSheet();
       return;
     }
     currentJob = body.id;
-    metaEl.textContent = "Job " + currentJob + " queued...";
+    setMeta("Job " + currentJob + " queued...");
+    // Don't pop the sheet on submit — wait until stdout/stderr
+    // or a terminal status is available (see poll()).
+    hasResult = false;
+    sheetShownForJob = null;
+    if (viewResultBtn) viewResultBtn.classList.remove("show");
+    closeSheet();
     poll();
   } catch (e) {
     setStatus("failed");
-    metaEl.textContent = "Submit error: " + e.message;
-    runBtn.disabled = false;
+    setMeta("Submit error: " + e.message);
+    setRunDisabled(false);
     cancelBtn.disabled = true;
+    syncCancelDisabled();
+    hasResult = true;
+    openSheet();
   }
 }
 
@@ -311,9 +461,10 @@ async function poll() {
     const job = await res.json();
     if (!res.ok) {
       setStatus("failed");
-      metaEl.textContent = "Poll failed: HTTP " + res.status;
-      runBtn.disabled = false;
+      setMeta("Poll failed: HTTP " + res.status);
+      setRunDisabled(false);
       cancelBtn.disabled = true;
+      syncCancelDisabled();
       return;
     }
     setStatus(job.status);
@@ -325,15 +476,30 @@ async function poll() {
     if (job.timed_out) bits.push("timed_out");
     if (job.truncated) bits.push("truncated");
     if (job.error) bits.push("error: " + job.error);
-    metaEl.textContent = bits.join(" · ");
+    setMeta(bits.join(" · "));
+    const hasOutput = Boolean(job.stdout || job.stderr);
+    const isTerminal = job.status !== "queued" && job.status !== "running";
+    if (hasOutput || isTerminal) hasResult = true;
+    // Only show the sheet once stdout/stderr or a terminal status exists.
+    // Auto-open once per job; afterwards leave dismiss control to the user.
+    if (hasResult && sheetShownForJob !== job.id) {
+      if (isMobile() && !document.body.classList.contains("sheet-open")) openSheet();
+      sheetShownForJob = job.id;
+    }
     if (job.status === "queued" || job.status === "running") {
       pollTimer = setTimeout(poll, 1200);
     } else {
-      runBtn.disabled = false;
+      setRunDisabled(false);
       cancelBtn.disabled = true;
+      syncCancelDisabled();
+      // Keep the sheet open on completion so mobile users see the result;
+      // show the reopen pill if they dismissed it mid-run.
+      if (hasResult && isMobile() && !document.body.classList.contains("sheet-open")) {
+        viewResultBtn.classList.add("show");
+      }
     }
   } catch (e) {
-    metaEl.textContent = "Poll error: " + e.message + " — retrying...";
+    setMeta("Poll error: " + e.message + " — retrying...");
     pollTimer = setTimeout(poll, 2000);
   }
 }
@@ -341,20 +507,74 @@ async function poll() {
 async function cancel() {
   if (!currentJob) return;
   cancelBtn.disabled = true;
+  syncCancelDisabled();
   try {
     await fetch("/v1/executions/" + encodeURIComponent(currentJob), { method: "DELETE", headers: headers() });
     poll();
   } catch (e) {
-    metaEl.textContent = "Cancel error: " + e.message;
+    setMeta("Cancel error: " + e.message);
   }
 }
 
 runBtn.onclick = run;
 cancelBtn.onclick = cancel;
+// Bottom-sheet wiring (no-op on desktop)
+if (sheetCloseBtn) sheetCloseBtn.onclick = closeSheet;
+if (sheetBackdrop) sheetBackdrop.onclick = closeSheet;
+if (sheetCancelBtn) sheetCancelBtn.onclick = cancel;
+if (viewResultBtn) viewResultBtn.onclick = openSheet;
+if (sheetExpandBtn) sheetExpandBtn.onclick = () => {
+  const expanded = document.body.classList.toggle("sheet-expanded");
+  sheetExpandBtn.textContent = expanded ? "Collapse" : "Expand";
+};
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && document.body.classList.contains("sheet-open")) closeSheet();
+});
+// Swipe down to close / swipe up to expand (mobile sheet handle only).
+if (sheetHandleZone) {
+  let startY = null, deltaY = 0, dragging = false;
+  sheetHandleZone.addEventListener("touchstart", (e) => {
+    if (!isMobile() || e.touches.length !== 1) return;
+    dragging = true;
+    startY = e.touches[0].clientY;
+    deltaY = 0;
+  }, { passive: true });
+  sheetHandleZone.addEventListener("touchmove", (e) => {
+    if (!dragging || startY === null) return;
+    deltaY = e.touches[0].clientY - startY;
+    // Only follow downward drags live; upward drag expands on release.
+    if (deltaY > 0 && sheetEl) sheetEl.style.transform = "translateY(" + deltaY + "px)";
+  }, { passive: true });
+  const endDrag = () => {
+    if (!dragging) return;
+    dragging = false;
+    if (sheetEl) sheetEl.style.transform = "";
+    if (deltaY > 90) {
+      closeSheet();
+    } else if (deltaY < -70 && !document.body.classList.contains("sheet-expanded")) {
+      document.body.classList.add("sheet-expanded");
+      if (sheetExpandBtn) sheetExpandBtn.textContent = "Collapse";
+    }
+    startY = null; deltaY = 0;
+  };
+  sheetHandleZone.addEventListener("touchend", endDrag);
+  sheetHandleZone.addEventListener("touchcancel", endDrag);
+}
+// Leaving mobile viewport clears sheet state; entering keeps output inline until next run.
+if (sheetMedia && sheetMedia.addEventListener) {
+  sheetMedia.addEventListener("change", (e) => {
+    if (!e.matches) {
+      document.body.classList.remove("sheet-open", "sheet-expanded");
+      if (viewResultBtn) viewResultBtn.classList.remove("show");
+    }
+  });
+}
 buildTabs();
 entryEl.textContent = LANGS[current].entry;
 imageEl.textContent = LANGS[current].image;
 setStatus("idle");
+setMeta("No job yet.");
+syncCancelDisabled();
 </script>
 </body>
 </html>
