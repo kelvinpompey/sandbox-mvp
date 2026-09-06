@@ -70,6 +70,17 @@
   .entry { font-size:13px; color:var(--muted); margin-top:8px; overflow-wrap:anywhere; }
   .entry b { color:var(--text); }
   footer { text-align:center; color:var(--muted); font-size:12px; padding:18px clamp(12px,4vw,24px); }
+  /* ---- Large screens: output to the right of the editor ---- */
+  .play-columns { display:grid; gap:0; min-width:0; }
+  .play-main { min-width:0; }
+  @media (min-width:1024px){
+    header, main { max-width:1400px; }
+    .play-columns { grid-template-columns: minmax(0,7fr) minmax(0,5fr); gap:20px; align-items:start; margin-top:4px; }
+    .sheet { position:sticky; top:16px; }
+    .sheet-body .out-grid { grid-template-columns:1fr; }
+    .CodeMirror { height:420px; }
+    .out-box pre { max-height:300px; }
+  }
   /* ---- Result bottom sheet (mobile only) ---- */
   .sheet-backdrop, .sheet-handle-zone, #view-result-btn { display:none; }
   .sheet { min-width:0; }
@@ -185,6 +196,8 @@
     <h2>Try it &mdash; playground</h2>
     <p style="color:var(--muted);font-size:14px;margin:0">Pick a language tab, edit the code in the CodeMirror editor, optionally add stdin, then hit <b>Run</b>. Output is polled from the same API described above.</p>
     <div class="tabs" id="tabs"></div>
+    <div class="play-columns">
+    <div class="play-main">
     <div class="editor-top">
       <div class="entry">Editing <b id="entry-name">main.py</b> &nbsp;·&nbsp; <span id="lang-image"></span></div>
       <button class="run" id="run-btn">&#9654; Run</button>
@@ -212,8 +225,8 @@
         <div class="meta" id="job-meta">No job yet.</div>
       </div>
     </div>
+    </div>
 
-    <div class="sheet-backdrop" id="sheet-backdrop"></div>
     <div class="sheet" id="result-sheet" role="dialog" aria-modal="false" aria-label="Execution output">
       <div class="sheet-handle-zone" id="sheet-handle-zone">
         <div class="sheet-grabber"></div>
@@ -234,6 +247,8 @@
         </div>
       </div>
     </div>
+    </div>
+    <div class="sheet-backdrop" id="sheet-backdrop"></div>
     <button id="view-result-btn">↑ View result</button>
   </section>
 </main>
